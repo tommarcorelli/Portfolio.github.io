@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- JS actif + anti-FOUC : applique le mode jour AVANT le rendu si activé dans le portfolio -->
+  <script>
+    document.documentElement.classList.add('js');
+    try { if (localStorage.getItem('dayMode') === 'true') document.documentElement.classList.add('mode-jour'); } catch (e) {}
+  </script>
+  <title>Fiche de Réalisation — LAMP + pfSense | Tom Marcorelli</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='8' fill='%2306080a'/><text x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' font-family='monospace' font-weight='900' font-size='15' fill='%23eab308'>[01]</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+JP:wght@300;400;700&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:        #06080a;
+      --bg-card:   #0f1a22;
+      --bg-card2:  #0d1520;
+      --cyan:      #dff0fb;
+      --gold:      #eab308;
+      --text:      #ddeef8;
+      --muted:     #a8c4d8;
+      --dim:       #5a7a8a;
+      --border:    rgba(223,240,251,0.18);
+      --border-s:  rgba(223,240,251,0.55);
+      --mono:      'Share Tech Mono', monospace;
+      --display:   'Orbitron', sans-serif;
+      --body:      'Noto Sans JP', sans-serif;
+      --glow-c:    0 0 8px rgba(223,240,251,0.8), 0 0 24px rgba(223,240,251,0.3);
+      --glow-g:    0 0 8px rgba(234,179,8,0.8), 0 0 24px rgba(234,179,8,0.3);
+    }
+    /* ── MODE JOUR — palette claire (rouge manga) alignée sur le portfolio ── */
+    html.mode-jour {
+      --bg:        #f5f0e8;
+      --bg-card:   #ffffff;
+      --bg-card2:  #faf6ef;
+      --cyan:      #1e293b;
+      --gold:      #dc1414;
+      --text:      #1e293b;
+      --muted:     #475569;
+      --dim:       #94a3b8;
+      --border:    rgba(30,41,59,0.15);
+      --border-s:  rgba(30,41,59,0.40);
+      --glow-c:    none;
+      --glow-g:    none;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--body);
+      font-size: 1rem;
+      line-height: 1.7;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    /* ── TOPBAR ── */
+    .topbar {
+      position: sticky; top: 0; z-index: 100;
+      background: color-mix(in srgb, var(--bg) 92%, transparent);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.75rem 2rem;
+    }
+    .topbar__back {
+      display: flex; align-items: center; gap: 0.5rem;
+      color: var(--cyan); text-decoration: none;
+      font-family: var(--mono); font-size: 0.85rem;
+      transition: color 0.2s, text-shadow 0.2s;
+    }
+    .topbar__back:hover { color: var(--gold); text-shadow: var(--glow-g); }
+    .topbar__title {
+      font-family: var(--display); font-size: 0.75rem;
+      color: var(--muted); letter-spacing: 0.1em;
+    }
+    .topbar__right { display: flex; align-items: center; gap: 1rem; }
+    .topbar__badge {
+      background: rgba(234,179,8,0.12);
+      border: 1px solid rgba(234,179,8,0.4);
+      color: var(--gold); font-family: var(--mono);
+      font-size: 0.7rem; padding: 0.25rem 0.6rem; border-radius: 4px;
+    }
+    html.mode-jour .topbar__badge { background: rgba(220,20,20,0.08); border-color: rgba(220,20,20,0.4); }
+    .mode-toggle {
+      background: none; border: 1px solid var(--border);
+      color: var(--muted); border-radius: 6px;
+      width: 34px; height: 30px; cursor: none;
+      font-size: 0.9rem; line-height: 1;
+      display: flex; align-items: center; justify-content: center;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .mode-toggle:hover { border-color: var(--gold); color: var(--gold); }
+
+    /* ── LAYOUT ── */
+    .wrapper {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      max-width: 1300px; margin: 0 auto;
+      min-height: calc(100vh - 56px);
+    }
+
+    /* ── SIDEBAR NAV ── */
+    .sidebar {
+      position: sticky; top: 56px;
+      height: calc(100vh - 56px);
+      overflow-y: auto;
+      border-right: 1px solid var(--border);
+      padding: 2rem 1rem;
+    }
+    .sidebar::-webkit-scrollbar { width: 4px; }
+    .sidebar::-webkit-scrollbar-track { background: transparent; }
+    .sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    .nav-section { margin-bottom: 2rem; }
+    .nav-section__title {
+      font-family: var(--mono); font-size: 0.65rem;
+      color: var(--dim); letter-spacing: 0.15em;
+      text-transform: uppercase; margin-bottom: 0.75rem;
+      padding-left: 0.5rem;
+    }
+    .nav-link {
+      display: flex; align-items: center; gap: 0.5rem;
+      padding: 0.45rem 0.75rem; border-radius: 6px;
+      color: var(--muted); text-decoration: none;
+      font-size: 0.88rem; font-family: var(--body);
+      transition: all 0.2s; border-left: 2px solid transparent;
+      margin-bottom: 0.15rem;
+    }
+    .nav-link:hover, .nav-link.active {
+      color: var(--cyan); background: color-mix(in srgb, var(--cyan) 8%, transparent);
+      border-left-color: var(--cyan);
+    }
+    .nav-link--sub { font-size: 0.8rem; padding-left: 1.5rem; color: var(--dim); }
+    .nav-link--sub:hover { color: var(--muted); }
+    .nav-link__num { font-family: var(--mono); font-size: 0.7rem; color: var(--gold); min-width: 20px; }
+
+    /* ── CONTENT ── */
+    .content { padding: 3rem 3rem 6rem; max-width: 860px; }
+
+    /* ── HERO ── */
+    .hero { margin-bottom: 3rem; padding-bottom: 2rem; border-bottom: 1px solid var(--border); }
+    .hero__label {
+      font-family: var(--mono); font-size: 0.75rem;
+      color: var(--gold); letter-spacing: 0.15em;
+      margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem;
+    }
+    .hero__label::before { content: ''; display: inline-block; width: 20px; height: 1px; background: var(--gold); }
+    .hero__title {
+      font-family: var(--display); font-size: 2rem;
+      color: var(--cyan); font-weight: 900;
+      text-shadow: var(--glow-c); line-height: 1.2; margin-bottom: 0.5rem;
+    }
+    .hero__subtitle { font-family: var(--mono); font-size: 0.9rem; color: var(--gold); margin-bottom: 1.5rem; }
+    .hero__tags { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.5rem; }
+    .tag {
+      padding: 0.25rem 0.7rem; border-radius: 4px;
+      font-family: var(--mono); font-size: 0.7rem;
+      border: 1px solid var(--border-s); color: var(--muted);
+    }
+    .tag--gold { border-color: rgba(234,179,8,0.4); color: var(--gold); background: rgba(234,179,8,0.07); }
+    html.mode-jour .tag--gold { border-color: rgba(220,20,20,0.4); background: rgba(220,20,20,0.06); }
+    .tag--cyan { border-color: var(--border-s); color: var(--cyan); background: color-mix(in srgb, var(--cyan) 5%, transparent); }
+
+    .hero__meta { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 0.75rem; }
+    .meta-item { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem 1rem; }
+    .meta-item__label {
+      font-family: var(--mono); font-size: 0.65rem;
+      color: var(--dim); letter-spacing: 0.1em;
+      text-transform: uppercase; margin-bottom: 0.25rem;
+    }
+    .meta-item__value { color: var(--text); font-size: 0.88rem; }
+
+    /* ── SECTIONS ── */
+    .section { margin-bottom: 3rem; }
+    .section__header {
+      display: flex; align-items: center; gap: 1rem;
+      margin-bottom: 1.5rem; padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .section__num {
+      font-family: var(--display); font-size: 0.7rem;
+      color: var(--gold); background: rgba(234,179,8,0.1);
+      border: 1px solid rgba(234,179,8,0.3);
+      padding: 0.2rem 0.5rem; border-radius: 4px;
+      min-width: 36px; text-align: center;
+    }
+    html.mode-jour .section__num { background: rgba(220,20,20,0.08); border-color: rgba(220,20,20,0.3); }
+    .section__title { font-family: var(--display); font-size: 1.2rem; color: var(--cyan); font-weight: 700; }
+    h3 {
+      font-family: var(--mono); font-size: 0.95rem;
+      color: var(--gold); margin: 1.5rem 0 0.75rem;
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+    h3::before { content: '▶'; font-size: 0.6rem; color: var(--gold); }
+    p { color: var(--muted); margin-bottom: 0.75rem; font-size: 0.95rem; }
+    code {
+      font-family: var(--mono); font-size: 0.85em;
+      background: color-mix(in srgb, var(--gold) 12%, transparent);
+      color: var(--gold); padding: 0.05rem 0.35rem; border-radius: 3px;
+    }
+    strong { color: var(--text); }
+    em { color: var(--muted); font-style: italic; }
+
+    /* ── STACK / SPEC TABLE ── */
+    .stack-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-bottom: 1rem; }
+    .stack-table th {
+      background: color-mix(in srgb, var(--cyan) 6%, transparent);
+      color: var(--cyan); font-family: var(--mono);
+      font-size: 0.7rem; letter-spacing: 0.1em;
+      padding: 0.6rem 1rem; text-align: left;
+      border-bottom: 1px solid var(--border-s); text-transform: uppercase;
+    }
+    .stack-table td { padding: 0.5rem 1rem; border-bottom: 1px solid var(--border); color: var(--muted); vertical-align: middle; }
+    .stack-table tr:hover td { background: color-mix(in srgb, var(--cyan) 3%, transparent); }
+    .stack-table td:first-child { color: var(--gold); font-family: var(--mono); font-weight: 700; }
+
+    /* ── INFO BOX ── */
+    .info-box {
+      background: color-mix(in srgb, var(--cyan) 4%, transparent);
+      border: 1px solid color-mix(in srgb, var(--cyan) 15%, transparent);
+      border-left: 3px solid var(--cyan);
+      border-radius: 0 8px 8px 0;
+      padding: 0.85rem 1.1rem; margin: 1rem 0;
+      font-size: 0.88rem; color: var(--muted);
+      display: flex; gap: 0.75rem; align-items: flex-start;
+    }
+    .info-box__icon { color: var(--cyan); flex-shrink: 0; margin-top: 0.15rem; }
+    .info-box--gold { background: rgba(234,179,8,0.06); border-color: rgba(234,179,8,0.25); border-left-color: var(--gold); }
+    .info-box--gold .info-box__icon { color: var(--gold); }
+    .info-box--red { background: rgba(248,113,113,0.07); border-color: rgba(248,113,113,0.3); border-left-color: #f87171; }
+    .info-box--red .info-box__icon { color: #f87171; }
+
+    /* ── SPEC ROWS ── */
+    .spec { background: var(--bg-card2); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin: 1rem 0; }
+    .spec__title {
+      font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.08em;
+      color: var(--gold); background: rgba(234,179,8,0.06);
+      padding: 0.5rem 1rem; border-bottom: 1px solid var(--border); text-transform: uppercase;
+    }
+    html.mode-jour .spec__title { background: rgba(220,20,20,0.05); }
+    .spec__row { display: flex; justify-content: space-between; gap: 1rem; padding: 0.5rem 1rem; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
+    .spec__row:last-child { border-bottom: none; }
+    .spec__key { color: var(--dim); font-family: var(--mono); font-size: 0.8rem; }
+    .spec__val { color: var(--text); text-align: right; }
+    .spec__val--imp { color: var(--gold); }
+
+    /* ── CODE BLOCK ── */
+    .code-block {
+      background: #0a0d12; border: 1px solid rgba(223,240,251,0.12);
+      border-top: 2px solid var(--cyan); border-radius: 0 0 8px 8px;
+      overflow-x: auto; margin: 1rem 0;
+    }
+    html.mode-jour .code-block { border-top-color: #dc1414; }
+    .code-block__header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.4rem 1rem; background: rgba(223,240,251,0.05);
+      border-bottom: 1px solid rgba(223,240,251,0.08);
+    }
+    .code-block__lang { font-family: var(--mono); font-size: 0.65rem; color: var(--gold); letter-spacing: 0.1em; }
+    .code-block__dots { display: flex; gap: 0.4rem; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; }
+    .dot--r { background: #ff5f57; } .dot--y { background: #febc2e; } .dot--g { background: #28c840; }
+    pre { padding: 1rem 1.25rem; font-family: var(--mono); font-size: 0.82rem; line-height: 1.7; color: #c8d8f0; white-space: pre-wrap; word-break: break-word; }
+    .cm { color: #5a7a9a; } .t-hl { color: #eab308; font-weight: 700; }
+    .c-ok { color: #4ade80; } .c-cmd { color: #c8d8f0; } .c-red { color: #f87171; }
+
+    /* ── PROOF BLOCKS ── */
+    .proof { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; }
+    .proof__header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border); }
+    .proof__num {
+      background: rgba(234,179,8,0.12); border: 1px solid rgba(234,179,8,0.35);
+      color: var(--gold); font-family: var(--display); font-size: 0.7rem;
+      padding: 0.25rem 0.5rem; border-radius: 4px; min-width: 32px; text-align: center;
+    }
+    html.mode-jour .proof__num { background: rgba(220,20,20,0.08); border-color: rgba(220,20,20,0.35); }
+    .proof__title { font-family: var(--mono); font-size: 0.95rem; color: var(--cyan); }
+    .proof img { width: 100%; border-radius: 6px; border: 1px solid var(--border); margin: 1rem 0 0.5rem; display: block; }
+    .proof__caption { font-family: var(--mono); font-size: 0.75rem; color: var(--dim); text-align: center; margin-bottom: 0.75rem; font-style: italic; }
+    .proof__explain {
+      font-size: 0.88rem; color: var(--muted); padding: 0.6rem 0.9rem;
+      border-left: 2px solid var(--gold); background: rgba(234,179,8,0.04);
+      border-radius: 0 6px 6px 0; margin-top: 0.25rem;
+    }
+    html.mode-jour .proof__explain { background: rgba(220,20,20,0.04); }
+
+    /* ── TEST TABLE ── */
+    .test-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin: 1rem 0; }
+    .test-table th {
+      background: rgba(234,179,8,0.08); color: var(--gold); font-family: var(--mono);
+      font-size: 0.7rem; letter-spacing: 0.08em; padding: 0.6rem 1rem; text-align: left;
+      border-bottom: 1px solid rgba(234,179,8,0.3); text-transform: uppercase;
+    }
+    html.mode-jour .test-table th { background: rgba(220,20,20,0.07); border-bottom-color: rgba(220,20,20,0.3); }
+    .test-table td { padding: 0.55rem 1rem; border-bottom: 1px solid var(--border); color: var(--muted); vertical-align: middle; }
+    .test-table tr:hover td { background: rgba(234,179,8,0.03); }
+    .test-table td:first-child { font-family: var(--mono); font-size: 0.82rem; color: var(--cyan); }
+    .ok { color: #16a34a; font-weight: 700; } html:not(.mode-jour) .ok { color: #4ade80; }
+    .ko { color: #dc2626; font-weight: 700; } html:not(.mode-jour) .ko { color: #f87171; }
+
+    /* ── BILAN TABLE ── */
+    .bilan-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin: 1rem 0; }
+    .bilan-table th {
+      background: color-mix(in srgb, var(--cyan) 6%, transparent);
+      color: var(--cyan); font-family: var(--mono); font-size: 0.7rem;
+      padding: 0.6rem 1rem; border-bottom: 1px solid var(--border-s); text-align: left; text-transform: uppercase;
+    }
+    .bilan-table td { padding: 0.55rem 1rem; border-bottom: 1px solid var(--border); color: var(--muted); vertical-align: top; }
+    .bilan-table td:first-child { color: var(--gold); font-family: var(--mono); font-weight: 700; min-width: 60px; }
+
+    /* ── CARD GRID (DICP / améliorations) ── */
+    .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.75rem; margin: 1rem 0; }
+    .mini-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; }
+    .mini-card__icon { font-size: 1.3rem; margin-bottom: 0.4rem; }
+    .mini-card h4 { font-family: var(--mono); font-size: 0.82rem; color: var(--cyan); margin-bottom: 0.3rem; display: flex; gap: 0.4rem; align-items: center; }
+    .mini-card p { font-size: 0.82rem; margin: 0; }
+    .mini-card__num { font-family: var(--display); font-size: 0.7rem; color: var(--gold); }
+
+    /* ── BULLET LIST ── */
+    .bullet-list { list-style: none; padding: 0; margin: 0.5rem 0 1rem; }
+    .bullet-list li { display: flex; gap: 0.6rem; align-items: flex-start; color: var(--muted); font-size: 0.92rem; padding: 0.3rem 0; }
+    .bullet-list li::before { content: '◆'; color: var(--gold); font-size: 0.55rem; margin-top: 0.45rem; flex-shrink: 0; }
+
+    /* ── FOOTER ── */
+    .fiche-footer { margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--border); text-align: center; }
+    .fiche-footer__text { font-family: var(--mono); font-size: 0.75rem; color: var(--dim); }
+    .fiche-footer__kanji { font-family: 'Noto Sans JP', sans-serif; font-size: 1.2rem; color: var(--border-s); margin-bottom: 0.5rem; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 900px) {
+      .wrapper { grid-template-columns: 1fr; }
+      .sidebar { display: none; }
+      .content { padding: 2rem 1.25rem 4rem; }
+      .hero__title { font-size: 1.5rem; }
+      .topbar { padding: 0.75rem 1rem; }
+    }
+
+    /* ── SCROLL REVEAL (robuste sans JS) ── */
+    .js .section { opacity: 0; transform: translateY(20px); transition: opacity 0.4s ease, transform 0.4s ease; }
+    .section.visible { opacity: 1; transform: translateY(0); }
+    @media (prefers-reduced-motion: reduce) { .js .section { opacity: 1; transform: none; transition: none; } }
+
+    /* ── IMPRESSION / EXPORT PDF ── */
+    @media print {
+      @page { margin: 1.2cm; }
+      .topbar, .sidebar, .mode-toggle { display: none !important; }
+      .wrapper { display: block; max-width: none; }
+      .content { max-width: none; padding: 0; }
+      .js .section, .section { opacity: 1 !important; transform: none !important; margin-bottom: 1.4rem; }
+      .proof, .code-block, .info-box, .spec, table, .proof img, .card-grid { page-break-inside: avoid; break-inside: avoid; }
+      .section__header, h3 { page-break-after: avoid; }
+      .hero { page-break-after: avoid; }
+      * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+
+    /* ── CURSOR MANGA ── */
+    @media (hover: hover) { * { cursor: none !important; } }
+    @keyframes mangaInkFade { 0%{opacity:1;transform:translate(-50%,-50%) scale(1)} 100%{opacity:0;transform:translate(-50%,-50%) scale(0.3)} }
+    @keyframes mangaSplash { 0%{opacity:1;transform:translate(-50%,-50%) scale(1)} 100%{opacity:0;transform:translate(-50%,-50%) scale(0.2)} }
+  </style>
+</head>
+<body>
+
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <a href="javascript:void(0)" class="topbar__back" onclick="window.parent.postMessage('close-fiche-modal','*')">
+      ← Portfolio
+    </a>
+    <span class="topbar__title">FICHE DE RÉALISATION</span>
+    <div class="topbar__right">
+      <span class="topbar__badge">LAMP + PFSENSE</span>
+      <button class="mode-toggle" id="mode-toggle" type="button" aria-label="Basculer mode jour/nuit" title="Mode jour / nuit">☀</button>
+    </div>
+  </header>
+
+  <div class="wrapper">
+
+    <!-- SIDEBAR -->
+    <nav class="sidebar" aria-label="Navigation de la fiche">
+      <div class="nav-section">
+        <p class="nav-section__title">Navigation</p>
+        <a href="#presentation" class="nav-link"><span class="nav-link__num">01</span> Présentation</a>
+        <a href="#objectifs" class="nav-link"><span class="nav-link__num">02</span> Objectifs</a>
+        <a href="#schema" class="nav-link"><span class="nav-link__num">03</span> Schéma</a>
+        <a href="#realisation" class="nav-link"><span class="nav-link__num">04</span> Réalisation</a>
+        <a href="#etape1" class="nav-link nav-link--sub">1 – Pile LAMP</a>
+        <a href="#etape2" class="nav-link nav-link--sub">2 – Portail PHP</a>
+        <a href="#etape3" class="nav-link nav-link--sub">3 – pfSense</a>
+        <a href="#etape4" class="nav-link nav-link--sub">4 – Mise en DMZ</a>
+        <a href="#etape5" class="nav-link nav-link--sub">5 – Portail captif</a>
+        <a href="#etape6" class="nav-link nav-link--sub">6 – DNS local</a>
+        <a href="#etape7" class="nav-link nav-link--sub">7 – Sauvegarde</a>
+        <a href="#tests" class="nav-link"><span class="nav-link__num">05</span> Tests & Preuves</a>
+        <a href="#dicp" class="nav-link"><span class="nav-link__num">06</span> Sécurité DICP</a>
+        <a href="#bilan" class="nav-link"><span class="nav-link__num">07</span> Bilan</a>
+      </div>
+      <div class="nav-section">
+        <p class="nav-section__title">Ressources</p>
+        <a href="Fiche_LAMP_pfSense_.pdf" target="_blank" class="nav-link">
+          <span class="nav-link__num">↓</span> Fiche PDF
+        </a>
+      </div>
+    </nav>
+
+    <!-- CONTENT -->
+    <main class="content">
+
+      <!-- HERO -->
+      <div class="hero">
+        <p class="hero__label">PROJET E5 · BTS SIO SISR</p>
+        <h1 class="hero__title">Serveur Web LAMP<br>& pfSense en DMZ</h1>
+        <p class="hero__subtitle">Intranet sécurisé · DMZ · Portail captif · DNS local</p>
+        <div class="hero__tags">
+          <span class="tag tag--gold">pfSense CE 2.7</span>
+          <span class="tag tag--cyan">Debian 12</span>
+          <span class="tag">Apache 2.4</span>
+          <span class="tag">MariaDB 10.11</span>
+          <span class="tag">PHP 8.2</span>
+          <span class="tag">phpMyAdmin</span>
+          <span class="tag">DMZ</span>
+          <span class="tag">Portail captif</span>
+          <span class="tag">Pare-feu</span>
+        </div>
+        <div class="hero__meta">
+          <div class="meta-item"><p class="meta-item__label">Étudiant</p><p class="meta-item__value">Tom Marcorelli</p></div>
+          <div class="meta-item"><p class="meta-item__label">Formation</p><p class="meta-item__value">BTS SIO SISR</p></div>
+          <div class="meta-item"><p class="meta-item__label">École</p><p class="meta-item__value">Nexa Digital School</p></div>
+          <div class="meta-item"><p class="meta-item__label">Année</p><p class="meta-item__value">2025 – 2026</p></div>
+          <div class="meta-item"><p class="meta-item__label">Serveur LAMP</p><p class="meta-item__value">192.168.20.10 · intranet.local</p></div>
+          <div class="meta-item"><p class="meta-item__label">Environnement</p><p class="meta-item__value">VMware · LAN / DMZ</p></div>
+        </div>
+      </div>
+
+      <!-- 1. PRÉSENTATION -->
+      <section class="section" id="presentation">
+        <div class="section__header"><span class="section__num">01</span><h2 class="section__title">Présentation du projet</h2></div>
+        <h3>Contexte</h3>
+        <p>Dans le cadre du BTS SIO option SISR, ce projet consiste à déployer un serveur <strong>intranet LAMP</strong> sous Debian 12, isolé dans une <strong>DMZ</strong> derrière un pare-feu <strong>pfSense</strong>. L'accès des utilisateurs est contrôlé par un portail captif, la résolution de noms assurée par un DNS local, et la base de données sauvegardée automatiquement.</p>
+        <h3>Problématique</h3>
+        <p>Comment déployer et sécuriser un serveur intranet LAMP en l'isolant dans une DMZ via pfSense, tout en <strong>contrôlant les accès</strong> des utilisateurs par un portail captif et en <strong>garantissant la disponibilité</strong> et la sauvegarde des données ?</p>
+        <h3>Stack technique déployée</h3>
+        <table class="stack-table">
+          <thead><tr><th>Composant</th><th>Version</th><th>Rôle</th><th>Ports</th></tr></thead>
+          <tbody>
+            <tr><td>Apache</td><td>2.4.67</td><td>Serveur HTTP/HTTPS de l'intranet</td><td>80, 443</td></tr>
+            <tr><td>MariaDB</td><td>10.11.14</td><td>Serveur de base de données</td><td>3306</td></tr>
+            <tr><td>PHP</td><td>8.2.31</td><td>Langage serveur du portail</td><td>—</td></tr>
+            <tr><td>phpMyAdmin</td><td>5.2.1</td><td>Administration de la base</td><td>80 / 443</td></tr>
+            <tr><td>pfSense CE</td><td>2.7</td><td>Pare-feu · Routeur · DNS · DHCP · Portail captif</td><td>22, 53, 80, 443</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- 2. OBJECTIFS -->
+      <section class="section" id="objectifs">
+        <div class="section__header"><span class="section__num">02</span><h2 class="section__title">Objectifs techniques</h2></div>
+        <ul class="bullet-list">
+          <li>Installer pfSense CE 2.7 et configurer 3 interfaces réseau (WAN / LAN / DMZ)</li>
+          <li>Configurer les règles pare-feu : LAN→DMZ autorisé (80/443), DMZ→LAN bloqué</li>
+          <li>Déployer la pile LAMP sur Debian 12 (Apache, MariaDB, PHP, phpMyAdmin)</li>
+          <li>Placer le serveur en DMZ avec l'IP fixe 192.168.20.10</li>
+          <li>Mettre en place un portail captif pfSense avec authentification locale (employe1)</li>
+          <li>Configurer la résolution DNS locale : intranet.local → 192.168.20.10</li>
+          <li>Créer un portail intranet PHP dynamique — thème terminal, stats temps réel</li>
+          <li>Automatiser la sauvegarde de la base via cron (mysqldump quotidien à minuit)</li>
+        </ul>
+      </section>
+
+      <!-- 3. SCHÉMA -->
+      <section class="section" id="schema">
+        <div class="section__header"><span class="section__num">03</span><h2 class="section__title">Schéma de l'infrastructure</h2></div>
+        <img src="../assets/LAMP/schema-infra.jpg" alt="Schéma réseau : Internet → pfSense CE 2.7 → DMZ (LAMP 192.168.20.10) et LAN (Windows 10)" style="width:100%;border-radius:8px;border:1px solid var(--border);" onerror="this.style.display='none'"/>
+        <p style="text-align:center;font-family:var(--mono);font-size:0.75rem;color:var(--dim);margin-top:0.5rem;font-style:italic;">Internet → pfSense CE 2.7 → DMZ 192.168.20.0/24 (serveur LAMP) &amp; LAN 192.168.10.0/24 (client Windows 10)</p>
+        <table class="stack-table" style="margin-top:1.5rem;">
+          <thead><tr><th>VM / Équipement</th><th>Rôle</th><th>OS</th><th>IP</th></tr></thead>
+          <tbody>
+            <tr><td>pfSense CE 2.7</td><td>Pare-feu · Routeur · DNS · DHCP · Portail captif</td><td>FreeBSD</td><td>WAN .8.160 · LAN .10.2 · DMZ .20.2</td></tr>
+            <tr><td>Serveur LAMP</td><td>Serveur web + base de données intranet</td><td>Debian 12</td><td>192.168.20.10 (DMZ fixe)</td></tr>
+            <tr><td>Client Windows 10</td><td>Poste utilisateur — accès intranet</td><td>Windows 10</td><td>192.168.10.100 (DHCP LAN)</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- 4. RÉALISATION -->
+      <section class="section" id="realisation">
+        <div class="section__header"><span class="section__num">04</span><h2 class="section__title">Réalisation technique</h2></div>
+
+        <!-- Étape 1 -->
+        <div id="etape1">
+          <h3>Étape 1 – Installation de la pile LAMP</h3>
+          <p>Tous les paquets sont installés pendant que la VM est en NAT (accès Internet). Une fois validés localement, on basculera la carte réseau vers la DMZ.</p>
+          <div class="code-block">
+            <div class="code-block__header"><div class="code-block__dots"><div class="dot dot--r"></div><div class="dot dot--y"></div><div class="dot dot--g"></div></div><span class="code-block__lang">BASH · Debian 12</span></div>
+<pre><span class="cm">tom@lamp:~$</span> sudo apt install apache2 mariadb-server php libapache2-mod-php php-mysql -y
+<span class="cm">tom@lamp:~$</span> sudo apt install phpmyadmin -y
+<span class="cm">tom@lamp:~$</span> sudo systemctl enable apache2 mariadb
+<span class="c-ok">✓ apache2 2.4.67 · mariadb 10.11.14 · php 8.2.31 · phpMyAdmin 5.2.1</span></pre>
+          </div>
+          <div class="proof">
+            <div class="proof__header"><span class="proof__num">P1</span><span class="proof__title">Services LAMP actifs et administrables</span></div>
+            <img src="../assets/LAMP/apache-status.jpg" alt="systemctl status apache2 — active (running), enabled" onerror="this.style.display='none'"/>
+            <p class="proof__caption">Fig. 1 – systemctl status apache2 — active (running) et enabled au démarrage</p>
+            <p class="proof__explain">Apache est actif et configuré pour démarrer automatiquement au boot (<code>enabled</code>) — critère de disponibilité rempli.</p>
+            <img src="../assets/LAMP/phpmyadmin.jpg" alt="Page de connexion phpMyAdmin" onerror="this.style.display='none'"/>
+            <p class="proof__caption">Fig. 2 – phpMyAdmin opérationnel pour l'administration de MariaDB</p>
+            <p class="proof__explain">L'interface phpMyAdmin confirme que MariaDB et PHP fonctionnent ensemble : la base est administrable via le navigateur.</p>
+          </div>
+        </div>
+
+        <!-- Étape 2 -->
+        <div id="etape2">
+          <h3>Étape 2 – Création du portail intranet PHP</h3>
+          <p>Une page PHP dynamique affiche en temps réel l'IP serveur, l'OS, l'espace disque, la RAM et l'uptime. Le design adopte un <strong>thème terminal</strong> (fond noir, texte vert, animation Matrix, journal système animé). Trois versions successives ont été développées.</p>
+          <div class="info-box"><span class="info-box__icon">ℹ</span><span>V1 : portail basique (date + lien phpMyAdmin) → V2 : thème rouge « Direction Technique » → Version finale : <strong>INTRANET TERMINAL</strong> avec stats temps réel et journal système animé.</span></div>
+          <div class="proof">
+            <div class="proof__header"><span class="proof__num">P2</span><span class="proof__title">Portail intranet dynamique</span></div>
+            <img src="../assets/LAMP/intranet-terminal.jpg" alt="Portail INTRANET TERMINAL — thème terminal avec stats temps réel" onerror="this.style.display='none'"/>
+            <p class="proof__caption">Fig. 3 – Version finale « INTRANET TERMINAL » — Apache 2.4, MariaDB, PHP 8.2.31, stats live</p>
+            <p class="proof__explain">Le portail affiche dynamiquement l'état du serveur (services, disque, RAM, réseau) dans une interface soignée : c'est la vitrine de l'intranet pour les utilisateurs.</p>
+            <img src="../assets/LAMP/portail-intranet.jpg" alt="Version Direction Technique du portail" onerror="this.style.display='none'"/>
+            <p class="proof__caption">Fig. 4 – Version intermédiaire « Direction Technique » avec cartes de services</p>
+            <p class="proof__explain">Étape de conception : cartes Apache / MariaDB / PHP, liens vers phpMyAdmin et les infos serveur.</p>
+            <img src="../assets/LAMP/intranet-welcome.jpg" alt="Page Bienvenue sur l'Intranet — système opérationnel" onerror="this.style.display='none'"/>
+            <p class="proof__caption">Fig. 5 – « Bienvenue sur l'Intranet » — système opérationnel, IP serveur affichée</p>
+            <p class="proof__explain">Page d'accueil confirmant que l'intranet est opérationnel et joignable, avec accès direct à la base de données.</p>
+          </div>
+        </div>
+
+        <!-- Étape 3 -->
+        <div id="etape3">
+          <h3>Étape 3 – Configuration de pfSense</h3>
+          <p>pfSense centralise toute la sécurité réseau : routage, filtrage, DHCP, DNS et portail captif. Trois interfaces sont assignées.</p>
+          <div class="spec">
+            <div class="spec__title">Interfaces réseau pfSense</div>
+            <div class="spec__row"><span class="spec__key">em0 → WAN</span><span class="spec__val">VMnet8 (NAT) — 192.168.8.160</span></div>
+            <div class="spec__row"><span class="spec__key">em1 → LAN</span><span class="spec__val">192.168.10.2/24 — DHCP .100–.200</span></div>
+            <div class="spec__row"><span class="spec__key">em2 → DMZ</span><span class="spec__val">192.168.20.2/24 — DHCP désactivé</span></div>
+          </div>
+          <table class="test-table">
+            <thead><tr><th>Règle pare-feu</th><th>Flux</th><th>Décision</th></tr></thead>
+            <tbody>
+              <tr><td>LAN → DMZ</td><td>TCP 80 / 443 vers 192.168.20.10</td><td><span class="ok">ALLOW</span></td></tr>
+              <tr><td>DMZ → WAN</td><td>Tout (mises à jour)</td><td><span class="ok">ALLOW</span></td></tr>
+              <tr><td>DMZ → LAN</td><td>Tout — règle critique</td><td><span class="ko">BLOCK</span></td></tr>
+            </tbody>
+          </table>
+          <div class="info-box info-box--gold"><span class="info-box__icon">⚠</span><span>Si le serveur LAMP est compromis, l'attaquant reste bloqué en DMZ : la règle <strong>Block DMZ→LAN</strong> l'empêche de rebondir vers le réseau interne. C'est tout l'intérêt d'une DMZ.</span></div>
+          <div class="proof">
+            <div class="proof__header"><span class="proof__num">P3</span><span class="proof__title">pfSense — accès et règles de pare-feu</span></div>
+            <img src="../assets/LAMP/pfsense-login.jpg" alt="Page de connexion pfSense" onerror="this.style.display='none'"/>
+            <p class="proof__caption">Fig. 6 – Interface d'administration web de pfSense CE 2.7</p>
+            <p class="proof__explain">Toute la configuration (interfaces, règles, DHCP, DNS, portail captif) se fait depuis cette console web.</p>
+            <img src="../assets/LAMP/fw-lan.jpg" alt="Règles de pare-feu LAN — LAN vers intranet LAMP" onerror="this.style.display='none'"/>
+            <p class="proof__caption">Fig. 7 – Firewall / Rules / LAN — règle « LAN vers intranet LAMP » (80/443 autorisés)</p>
+            <p class="proof__explain">Le LAN peut atteindre le serveur LAMP en DMZ uniquement sur les ports web nécessaires : principe du moindre privilège.</p>
+            <img src="../assets/LAMP/fw-dmz.jpg" alt="Règles de pare-feu DMZ — Block DMZ vers LAN" onerror="this.style.display='none'"/>
+            <p class="proof__caption">Fig. 8 – Firewall / Rules / DMZ — règle « Block DMZ vers LAN »</p>
+            <p class="proof__explain">La DMZ est cloisonnée : aucun flux ne peut remonter vers le LAN. C'est la règle qui garantit l'isolation.</p>
+          </div>
+        </div>
+
+        <!-- Étape 4 -->
+        <div id="etape4">
+          <h3>Étape 4 – Mise en réseau DMZ du serveur LAMP</h3>
+          <p>Une fois la pile validée en local, on bascule la carte réseau VMware vers la DMZ et on fige l'IP sur Debian.</p>
+          <div class="code-block">
+            <div class="code-block__header"><div class="code-block__dots"><div class="dot dot--r"></div><div class="dot dot--y"></div><div class="dot dot--g"></div></div><span class="code-block__lang">/etc/network/interfaces</span></div>
+<pre>auto ens33
+iface ens33 inet static
+    address 192.168.20.10
+    netmask 255.255.255.0
+    gateway 192.168.20.2
+    dns-nameservers 192.168.20.2
+
+<span class="cm">tom@lamp:~$</span> ping 192.168.20.2 -c 4   <span class="c-ok"># 0% packet loss ✓</span>
+<span class="cm">tom@lamp:~$</span> ping 8.8.8.8 -c 4        <span class="c-ok"># 0% packet loss ✓</span></pre>
+          </div>
+        </div>
+
+        <!-- Étape 5 -->
+        <div id="etape5">
+          <h3>Étape 5 – Portail captif pfSense</h3>
+          <p>Le portail captif intercepte toutes les connexions HTTP des clients LAN et les redirige vers une page de login. Seuls les utilisateurs authentifiés accèdent au réseau.</p>
+          <div class="proof">
+            <div class="proof__header"><span class="proof__num">P4</span><span class="proof__title">Portail captif avec authentification locale</span></div>
+            <img src="../assets/LAMP/captive-portal.jpg" alt="Configuration du portail captif pfSense sur l'interface LAN" onerror="this.style.display='none'"/>
+            <p class="proof__caption">Fig. 9 – Services / Captive Portal / LAN_Intranet — portail activé sur l'interface LAN</p>
+            <p class="proof__explain">Le portail est activé sur le LAN : toute navigation d'un client non authentifié est redirigée vers la page de login.</p>
+            <img src="../assets/LAMP/captive-auth.jpg" alt="Méthode d'authentification — Local Database" onerror="this.style.display='none'"/>
+            <p class="proof__caption">Fig. 10 – Authentification : « Use an Authentication backend » → Local Database</p>
+            <p class="proof__explain">L'authentification s'appuie sur la base d'utilisateurs locale de pfSense, avec le privilège « Captive Portal Login » requis.</p>
+            <img src="../assets/LAMP/user-manager.jpg" alt="User Manager pfSense — utilisateur employe1" onerror="this.style.display='none'"/>
+            <p class="proof__caption">Fig. 11 – System / User Manager — utilisateur employe1 (Employé Test) créé</p>
+            <p class="proof__explain">Le compte employe1 sert à valider la chaîne complète : login au portail → accès autorisé au réseau et à l'intranet.</p>
+          </div>
+        </div>
+
+        <!-- Étape 6 -->
+        <div id="etape6">
+          <h3>Étape 6 – Résolution DNS locale (intranet.local)</h3>
+          <p>Le DNS Resolver de pfSense résout <code>intranet.local → 192.168.20.10</code>. Tous les clients LAN en bénéficient automatiquement via le DHCP pfSense, sans toucher au fichier hosts.</p>
+          <div class="code-block">
+            <div class="code-block__header"><div class="code-block__dots"><div class="dot dot--r"></div><div class="dot dot--y"></div><div class="dot dot--g"></div></div><span class="code-block__lang">CMD · Windows</span></div>
+<pre><span class="cm">C:\Users\tom></span> nslookup intranet.local
+Serveur : pfSense.home.arpa
+Address: 192.168.10.2
+Nom : intranet.local
+<span class="c-ok">Address: 192.168.20.10 ✓</span></pre>
+          </div>
+          <div class="proof">
+            <div class="proof__header"><span class="proof__num">P5</span><span class="proof__title">Host Override DNS</span></div>
+            <img src="../assets/LAMP/dns-resolver.jpg" alt="DNS Resolver pfSense — Host Override intranet.local vers 192.168.20.10" onerror="this.style.display='none'"/>
+            <p class="proof__caption">Fig. 12 – Services / DNS Resolver / Host Override — intranet.local → 192.168.20.10</p>
+            <p class="proof__explain">L'entrée Host Override associe le nom <code>intranet.local</code> à l'IP du serveur LAMP : les utilisateurs tapent un nom lisible au lieu d'une IP.</p>
+          </div>
+        </div>
+
+        <!-- Étape 7 -->
+        <div id="etape7">
+          <h3>Étape 7 – Sauvegarde automatique de la base</h3>
+          <p>Un script bash utilise <code>mysqldump</code> pour exporter toutes les bases dans un fichier SQL horodaté. Une tâche cron planifie l'exécution chaque nuit à minuit.</p>
+          <div class="code-block">
+            <div class="code-block__header"><div class="code-block__dots"><div class="dot dot--r"></div><div class="dot dot--y"></div><div class="dot dot--g"></div></div><span class="code-block__lang">BASH · cron</span></div>
+<pre><span class="cm"># ~/backup_db.sh</span>
+DATE=$(date +%Y-%m-%d_%Hh%M)
+mysqldump -u root -p --all-databases &gt; ~/backups/backup_$DATE.sql
+
+<span class="cm">tom@lamp:~$</span> crontab -l
+<span class="c-ok">0 0 * * * /bin/bash ~/backup_db.sh</span>   <span class="cm"># tous les jours à minuit</span></pre>
+          </div>
+          <div class="proof">
+            <div class="proof__header"><span class="proof__num">P6</span><span class="proof__title">Tâche cron de sauvegarde</span></div>
+            <img src="../assets/LAMP/crontab-backup.jpg" alt="crontab -l montrant la tâche de sauvegarde à minuit" onerror="this.style.display='none'"/>
+            <p class="proof__caption">Fig. 13 – crontab -l — <code>0 0 * * * /bin/bash ~/backup_db.sh</code></p>
+            <p class="proof__explain">La sauvegarde s'exécute automatiquement chaque nuit : en cas d'incident, les données de la veille sont récupérables — critère de disponibilité.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 5. TESTS -->
+      <section class="section" id="tests">
+        <div class="section__header"><span class="section__num">05</span><h2 class="section__title">Tests & Preuves</h2></div>
+        <table class="test-table">
+          <thead><tr><th>Test réalisé</th><th>Résultat attendu</th><th>Statut</th></tr></thead>
+          <tbody>
+            <tr><td>Portail captif</td><td>Accès HTTP redirigé vers login (192.168.10.2:8002)</td><td><span class="ok">✅ OK</span></td></tr>
+            <tr><td>Auth employe1 + accès intranet</td><td>Réseau autorisé, intranet.local joignable</td><td><span class="ok">✅ OK</span></td></tr>
+            <tr><td>nslookup intranet.local</td><td>→ 192.168.20.10</td><td><span class="ok">✅ OK</span></td></tr>
+            <tr><td>DHCP client Windows</td><td>192.168.10.100, GW 192.168.10.2</td><td><span class="ok">✅ OK</span></td></tr>
+            <tr><td>Isolation DMZ (ping DMZ→LAN)</td><td>100% packet loss (bloqué)</td><td><span class="ok">✅ OK</span></td></tr>
+            <tr><td>Services au démarrage</td><td>apache2 & mariadb active + enabled</td><td><span class="ok">✅ OK</span></td></tr>
+            <tr><td>phpMyAdmin via intranet.local</td><td>http://intranet.local/phpmyadmin</td><td><span class="ok">✅ OK</span></td></tr>
+          </tbody>
+        </table>
+        <div class="info-box"><span class="info-box__icon">ℹ</span><span><strong>Isolation prouvée :</strong> depuis le serveur LAMP, un <code>ping</code> vers le client Windows retourne <strong>100% packet loss</strong> — la règle Block DMZ→LAN est effective. Inversement, le client accède bien à l'intranet en 80/443. Le cloisonnement est validé dans les deux sens.</span></div>
+      </section>
+
+      <!-- 6. SÉCURITÉ DICP -->
+      <section class="section" id="dicp">
+        <div class="section__header"><span class="section__num">06</span><h2 class="section__title">Sécurité — Critères DICP</h2></div>
+        <div class="card-grid">
+          <div class="mini-card"><h4>🔒 Confidentialité</h4><p>Portail captif pfSense — authentification obligatoire avant tout accès au réseau et à l'intranet.</p></div>
+          <div class="mini-card"><h4>🛡 Intégrité</h4><p>Règles pare-feu strictes — seuls les flux HTTP/HTTPS nécessaires sont autorisés entre LAN et DMZ.</p></div>
+          <div class="mini-card"><h4>⚡ Disponibilité</h4><p>Apache + MariaDB en démarrage automatique + sauvegarde cron quotidienne à minuit.</p></div>
+          <div class="mini-card"><h4>🔴 Isolation</h4><p>Serveur LAMP en DMZ cloisonnée — règle Block DMZ→LAN prouvée par test ping (100% loss).</p></div>
+        </div>
+      </section>
+
+      <!-- 7. BILAN -->
+      <section class="section" id="bilan">
+        <div class="section__header"><span class="section__num">07</span><h2 class="section__title">Bilan et Compétences</h2></div>
+
+        <h3>Difficultés rencontrées et résolues</h3>
+        <div class="info-box info-box--red">
+          <span class="info-box__icon">⚠</span>
+          <span><strong>Portail captif — Access Denied avec employe1.</strong> Cause : le privilège « Captive Portal Login » n'était pas attribué. Solution : System → User Manager → Edit employe1 → Privileges → ajouter « Captive Portal Login ». → Authentification fonctionnelle.</span>
+        </div>
+        <div class="info-box info-box--red">
+          <span class="info-box__icon">⚠</span>
+          <span><strong>DNS intranet.local non résolu depuis Windows.</strong> Cause : le DHCP VMware sur VMnet1 distribuait un autre DNS que pfSense (conflit de serveurs DHCP). Solution : désactivation du DHCP VMware → pfSense seul distribue 192.168.10.2 comme DNS. → nslookup OK.</span>
+        </div>
+
+        <h3>Axes d'amélioration</h3>
+        <div class="card-grid">
+          <div class="mini-card"><h4><span class="mini-card__num">01</span> HTTPS / SSL</h4><p>a2enmod ssl + certificat OpenSSL (Let's Encrypt en production).</p></div>
+          <div class="mini-card"><h4><span class="mini-card__num">02</span> Fail2Ban</h4><p>Blocage d'IP après 5 tentatives SSH échouées, synchronisable avec pfSense.</p></div>
+          <div class="mini-card"><h4><span class="mini-card__num">03</span> VPN OpenVPN</h4><p>Accès à l'intranet en télétravail, tout le trafic chiffré via pfSense.</p></div>
+          <div class="mini-card"><h4><span class="mini-card__num">04</span> Supervision</h4><p>Zabbix / Grafana : disponibilité, CPU/RAM, alertes automatiques.</p></div>
+          <div class="mini-card"><h4><span class="mini-card__num">05</span> LDAP / AD</h4><p>Comptes centralisés — désactiver un compte coupe l'accès partout.</p></div>
+          <div class="mini-card"><h4><span class="mini-card__num">06</span> HA — CARP</h4><p>Deux pfSense actif/passif pour éliminer le point de défaillance unique.</p></div>
+        </div>
+
+        <h3>Compétences BTS SIO SISR — Bloc 1</h3>
+        <table class="bilan-table">
+          <thead><tr><th>Compétence</th><th>Mise en œuvre dans ce projet</th></tr></thead>
+          <tbody>
+            <tr><td>B1.1</td><td>Patrimoine — installation, configuration et documentation LAMP + pfSense (LAN/DMZ)</td></tr>
+            <tr><td>B1.2</td><td>Incidents — portail captif Access Denied, conflit DHCP/DNS, règles pare-feu</td></tr>
+            <tr><td>B1.3</td><td>Présence en ligne — portail intranet PHP dynamique, thème terminal, stats live</td></tr>
+            <tr><td>B1.4</td><td>Mode projet — enchaînement pfSense → LAMP → portail → captif → DNS → sauvegarde → tests</td></tr>
+            <tr><td>B1.5</td><td>Services — intranet accessible depuis le LAN après authentification portail captif</td></tr>
+            <tr><td>B1.6</td><td>Dév. professionnel — documentation avec captures réelles, fiche et rapport technique</td></tr>
+            <tr><td>Cyber</td><td>DICP — Confidentialité · Intégrité · Disponibilité · Isolation, tous prouvés</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <footer class="fiche-footer">
+        <p class="fiche-footer__kanji">サーバー · ファイアウォール · DMZ</p>
+        <p class="fiche-footer__text">BTS SIO SISR · Nexa Digital School · Tom Marcorelli · 2025-2026 · intranet.local</p>
+      </footer>
+
+    </main>
+  </div>
+
+  <script>
+    // ── Bascule mode jour / nuit (partagée avec le portfolio via localStorage) ──
+    (function () {
+      const root = document.documentElement;
+      const btn = document.getElementById('mode-toggle');
+      function sync() { btn.textContent = root.classList.contains('mode-jour') ? '🌙' : '☀'; }
+      sync();
+      btn.addEventListener('click', () => {
+        const jour = root.classList.toggle('mode-jour');
+        try { localStorage.setItem('dayMode', jour ? 'true' : 'false'); } catch (e) {}
+        sync();
+      });
+    })();
+
+    // ── Scrollspy ──
+    const links = document.querySelectorAll('.nav-link');
+    const spy = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          const link = document.querySelector(`.nav-link[href="#${e.target.id}"]`);
+          if (link) { links.forEach(l => l.classList.remove('active')); link.classList.add('active'); }
+        }
+      });
+    }, { rootMargin: '-30% 0px -60% 0px' });
+    document.querySelectorAll('[id]').forEach(el => spy.observe(el));
+
+    // ── Apparition des sections au scroll ──
+    const sectObs = new IntersectionObserver((entries) => {
+      entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+    }, { threshold: 0.05 });
+    document.querySelectorAll('.section').forEach(s => sectObs.observe(s));
+  </script>
+
+  <script>
+    // ── Curseur manga ──
+    (function () {
+      if (window.matchMedia('(hover: none)').matches) return;
+      const pen = document.createElement('div');
+      pen.setAttribute('aria-hidden', 'true');
+      pen.textContent = '✒️';
+      pen.style.cssText = 'position:fixed;pointer-events:none;font-size:20px;transform:rotate(-30deg);z-index:99999;left:-100px;top:-100px;line-height:1;transition:none;';
+      document.body.appendChild(pen);
+      document.addEventListener('mousemove', e => {
+        pen.style.left = (e.clientX + 5) + 'px';
+        pen.style.top  = (e.clientY - 20) + 'px';
+        if (Math.random() > 0.45) {
+          const dot = document.createElement('div');
+          dot.setAttribute('aria-hidden', 'true');
+          const size = 2 + Math.random() * 5;
+          const col = document.documentElement.classList.contains('mode-jour') ? 'rgba(30,41,59,0.5)' : 'rgba(221,238,248,0.7)';
+          dot.style.cssText = `position:fixed;pointer-events:none;border-radius:50%;z-index:99998;width:${size}px;height:${size}px;background:${col};left:${e.clientX+14}px;top:${e.clientY+2}px;transform:translate(-50%,-50%);animation:mangaInkFade 0.7s ease-out forwards;`;
+          document.body.appendChild(dot);
+          setTimeout(() => dot.remove(), 700);
+        }
+      });
+      document.addEventListener('mouseleave', () => { pen.style.left = '-100px'; pen.style.top = '-100px'; });
+      document.addEventListener('click', e => {
+        const col = document.documentElement.classList.contains('mode-jour') ? '#dc1414' : '#eab308';
+        for (let i = 0; i < 10; i++) {
+          const drop = document.createElement('div');
+          drop.setAttribute('aria-hidden', 'true');
+          const angle = (i/10)*Math.PI*2 + Math.random()*0.4;
+          const dist  = 8 + Math.random()*22;
+          const size  = 3 + Math.random()*8;
+          drop.style.cssText = `position:fixed;pointer-events:none;border-radius:50%;z-index:99997;width:${size}px;height:${size}px;background:${col};left:${e.clientX+Math.cos(angle)*dist}px;top:${e.clientY+Math.sin(angle)*dist}px;transform:translate(-50%,-50%);animation:mangaSplash 0.55s ease-out forwards;`;
+          document.body.appendChild(drop);
+          setTimeout(() => drop.remove(), 600);
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,270 @@
+/* ================================================================
+   14. FOOTER
+   ================================================================ */
+.site-footer { background: var(--color-bg-secondary); border-top: 1px solid rgba(223,240,251,0.18); padding: var(--space-12) 0; }
+html.mode-jour .site-footer { background: #fffdf8 !important; border-top: 2.5px solid #111 !important; }
+html.mode-jour .site-footer p, html.mode-jour .site-footer span { color: #64748b; }
+
+.footer-container { max-width: var(--container-max); margin: 0 auto; padding: 0 var(--space-6); display: flex; flex-direction: column; align-items: center; gap: var(--space-4); text-align: center; }
+.footer-top { display: flex; flex-direction: column; align-items: center; gap: var(--space-2); }
+.footer-logo { font-family: var(--font-display); font-size: var(--fs-2xl); font-weight: 900; }
+html.mode-jour .footer-logo { color: #111 !important; }
+.footer-logo__bracket { color: #eab308; text-shadow: 0 0 12px rgba(234,179,8,0.55); }
+html.mode-jour .footer-logo__bracket { color: #dc1414 !important; text-shadow: none !important; }
+.footer-tagline { font-family: var(--font-mono); font-size: var(--fs-sm); color: var(--color-text-muted); }
+html.mode-jour .footer-tagline { color: #111 !important; }
+.footer-bottom { display: flex; flex-direction: column; align-items: center; gap: var(--space-2); border-top: 1px solid rgba(223,240,251,0.12); padding-top: var(--space-6); width: 100%; }
+.footer-copy   { font-family: var(--font-mono); font-size: var(--fs-xs); color: var(--color-text-muted); }
+.footer-kanji  { font-family: var(--font-japanese); font-size: var(--fs-xs); color: rgba(223,240,251,0.20); letter-spacing: 0.3em; }
+html.mode-jour .footer-copy  { color: #111 !important; }
+html.mode-jour .footer-kanji { color: #111 !important; }
+
+.footer-github { font-family: var(--font-mono); font-size: var(--fs-sm); color: #eab308; text-decoration: none; margin-top: var(--space-2); display: inline-block; transition: color var(--transition-fast), text-shadow var(--transition-fast); }
+.footer-github:hover { color: #fcd34d; text-shadow: 0 0 10px rgba(234,179,8,0.55); }
+html.mode-jour .footer-github       { color: #dc1414 !important; }
+html.mode-jour .footer-github:hover { color: #b91010 !important; text-shadow: none !important; }
+
+/* ================================================================
+   15. BARRE DE LECTURE
+   ================================================================ */
+.reading-progress {
+  position: fixed; top: 0; left: 0;
+  width: var(--reading-progress, 0%); height: 3px;
+  background: linear-gradient(90deg, #dff0fb, #eab308);
+  box-shadow: 0 0 8px rgba(234,179,8,0.45);
+  z-index: 2000;
+  transition: width 0.1s linear;
+  border-radius: 0 2px 2px 0;
+}
+html.mode-jour .reading-progress { background: linear-gradient(90deg, #dc1414, #ff4444); box-shadow: 0 0 6px rgba(220,20,20,0.4); }
+
+/* ================================================================
+   16. PRÉLOADER
+   ================================================================ */
+.preloader { position: fixed; inset: 0; z-index: 10000; background: #06080a; display: flex; align-items: center; justify-content: center; flex-direction: column; transition: opacity 0.6s ease, visibility 0.6s ease; }
+.preloader--hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+.preloader__inner  { display: flex; flex-direction: column; align-items: center; gap: var(--space-6); }
+.preloader__logo   { display: flex; align-items: center; gap: var(--space-2); font-family: var(--font-display); font-size: clamp(3rem, 8vw, 5rem); font-weight: 900; }
+.preloader__bracket { color: #eab308; text-shadow: 0 0 20px rgba(234,179,8,0.80); animation: preloader-bracket-pulse 1s ease-in-out infinite alternate; }
+@keyframes preloader-bracket-pulse { from { opacity: 0.4; } to { opacity: 1; text-shadow: 0 0 20px rgba(234,179,8,1); } }
+.preloader__letters { display: flex; gap: 4px; }
+.preloader__letter  { display: inline-block; color: #dff0fb; opacity: 0; transform: translateY(-20px); animation: preloader-letter-drop 0.5s ease forwards; animation-delay: calc(var(--i) * 0.15s); }
+@keyframes preloader-letter-drop { to { opacity: 1; transform: translateY(0); } }
+.preloader__bar-wrapper { width: 200px; height: 2px; background: rgba(234,179,8,0.10); border-radius: 2px; overflow: hidden; }
+.preloader__bar { height: 100%; width: 0%; background: linear-gradient(90deg, #dff0fb, #eab308); border-radius: 2px; box-shadow: 0 0 8px rgba(234,179,8,0.50); transition: width 0.3s ease; }
+.preloader__status { font-family: var(--font-mono); font-size: var(--fs-xs); color: rgba(168,200,224,0.60); letter-spacing: 0.1em; min-height: 1.2em; }
+.preloader__kanji  { font-family: var(--font-japanese); font-size: var(--fs-sm); color: rgba(234,179,8,0.18); letter-spacing: 0.4em; }
+
+html.mode-jour .preloader         { background: #f8fafc; }
+html.mode-jour .preloader__bracket{ color: #dc1414 !important; text-shadow: none !important; animation: none !important; }
+html.mode-jour .preloader__letter { color: #111 !important; }
+html.mode-jour .preloader__bar-wrapper { background: rgba(220,20,20,0.12) !important; }
+html.mode-jour .preloader__bar   { background: linear-gradient(90deg, #dc1414, #ff4444) !important; box-shadow: none !important; }
+html.mode-jour .preloader__status{ color: #64748b !important; }
+html.mode-jour .preloader__kanji { color: rgba(17,17,17,0.15) !important; }
+
+/* ================================================================
+   17. TIMELINE — PARCOURS
+   ================================================================ */
+.timeline-section { background: var(--color-bg-secondary); position: relative; }
+.timeline { list-style: none; position: relative; max-width: 800px; margin: 0 auto; padding: 0; }
+.timeline-item { display: grid; grid-template-columns: 40px 1fr; gap: var(--space-6); margin-bottom: var(--space-12); opacity: 0; transform: translateX(-20px); transition: opacity 0.5s ease, transform 0.5s ease; }
+.timeline-item.is-revealed { opacity: 1; transform: translateX(0); }
+.timeline-item:nth-child(1) { transition-delay: 0s; }
+.timeline-item:nth-child(2) { transition-delay: 0.15s; }
+.timeline-item:nth-child(3) { transition-delay: 0.3s; }
+
+.timeline-item__marker { display: flex; flex-direction: column; align-items: center; padding-top: 4px; }
+.timeline-item__dot { width: 14px; height: 14px; border-radius: 50%; background: rgba(234,179,8,0.35); border: 2px solid rgba(234,179,8,0.50); flex-shrink: 0; z-index: 1; }
+.timeline-item__dot--active { background: #eab308; box-shadow: 0 0 10px rgba(234,179,8,0.80), 0 0 20px rgba(234,179,8,0.30); border-color: rgba(234,179,8,0.50); animation: pulse-dot 2s ease-in-out infinite; }
+.timeline-item__dot--future { background: transparent; border: 2px solid rgba(234,179,8,0.30); }
+.timeline-item__line { flex: 1; width: 2px; background: linear-gradient(180deg, #dff0fb, rgba(223,240,251,0.08)); margin-top: var(--space-2); }
+.timeline-item:last-child .timeline-item__line { display: none; }
+
+.timeline-item__content {
+  background: var(--color-bg-card);
+  border: 2px solid rgba(234,179,8,0.40);
+  box-shadow: 3px 3px 0px rgba(234,179,8,0.20);
+  border-radius: var(--radius-lg); padding: var(--space-6); position: relative;
+  transition: border-color var(--transition-base), box-shadow var(--transition-base);
+}
+.timeline-item--current .timeline-item__content { border-color: rgba(234,179,8,0.60); box-shadow: 6px 6px 0px rgba(234,179,8,0.45), 0 0 20px rgba(234,179,8,0.08); }
+
+.timeline-item__date { display: block; font-family: var(--font-mono); font-size: var(--fs-xs); color: var(--color-neon-cyan); letter-spacing: 0.1em; margin-bottom: var(--space-2); }
+.timeline-item__title { font-family: var(--font-display); font-size: var(--fs-lg); font-weight: 700; color: var(--color-text-primary); letter-spacing: 0.03em; margin-bottom: var(--space-2); display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; }
+.timeline-item__badge { font-family: var(--font-mono); font-size: var(--fs-xs); color: #06080c; background: #eab308; padding: 2px var(--space-2); border-radius: 50px; font-weight: 400; box-shadow: 0 0 10px rgba(234,179,8,0.50); }
+.timeline-item__school { display: flex; align-items: center; gap: var(--space-2); font-family: var(--font-mono); font-size: var(--fs-sm); color: #e8f4fc; margin-bottom: var(--space-3); }
+.timeline-item__school-icon { color: #eab308; }
+.timeline-item__description { font-size: var(--fs-sm); color: #e8f4fc; line-height: 1.7; margin-bottom: var(--space-4); }
+.timeline-item__tags { display: flex; gap: var(--space-2); flex-wrap: wrap; }
+.timeline-tag { font-family: var(--font-mono); font-size: var(--fs-xs); color: #eab308; border: 1px solid rgba(234,179,8,0.45); background: rgba(234,179,8,0.05); padding: 2px var(--space-2); border-radius: var(--radius-sm); }
+.timeline-tag--highlight { color: #eab308; border-color: rgba(234,179,8,0.60); background: rgba(234,179,8,0.10); }
+
+html.mode-jour .timeline-item__content { background: #fffdf8 !important; border: 2.5px solid #111 !important; box-shadow: 5px 5px 0px #111 !important; transition: transform 0.15s ease, box-shadow 0.15s ease !important; }
+html.mode-jour .timeline-item__dot     { background: #111; border-color: #111; }
+html.mode-jour .timeline-item__dot--active { background: #dc1414; border-color: #dc1414; box-shadow: 0 0 0 4px rgba(220,20,20,0.15); animation: none; }
+html.mode-jour .timeline-item__dot--future { background: transparent; border-color: #dc1414; }
+html.mode-jour .timeline-item__line    { background: #111; }
+html.mode-jour .timeline-item__title  { color: #1e293b; }
+html.mode-jour .timeline-item__badge  { background: #dc1414 !important; color: #fff !important; box-shadow: none !important; }
+html.mode-jour .timeline-item__school { color: #dc1414 !important; }
+html.mode-jour .timeline-item__school-icon { color: #111 !important; }
+html.mode-jour .timeline-item__description { color: #222 !important; }
+html.mode-jour .timeline-item__date   { color: #111 !important; }
+html.mode-jour .timeline-tag          { color: #333 !important; border-color: rgba(17,17,17,0.25) !important; background: rgba(17,17,17,0.04) !important; }
+html.mode-jour .timeline-tag--highlight { color: #111 !important; border-color: rgba(0,0,0,0.2) !important; }
+
+/* ================================================================
+   18. CERTIFICATIONS
+   ================================================================ */
+.certs-section { background: var(--color-bg-primary); }
+html.mode-jour .certs-section { background: #f8fafc; }
+
+.certs-grid { display: grid; grid-template-columns: 1fr; gap: var(--space-6); }
+
+.cert-card {
+  background: var(--color-bg-card);
+  border: 2px solid rgba(234,179,8,0.30);
+  box-shadow: 4px 4px 0px rgba(234,179,8,0.18);
+  border-radius: var(--radius-lg); padding: var(--space-6);
+  transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+  opacity: 0; transform: translateY(20px);
+}
+.cert-card.is-revealed { opacity: 1; transform: translateY(0); transition: opacity 0.5s ease, transform 0.5s ease, border-color 0.15s, box-shadow 0.15s; }
+.cert-card:hover { transform: translate(-2px,-2px); box-shadow: 6px 6px 0px rgba(234,179,8,0.55); border-color: rgba(234,179,8,0.85); }
+.cert-card--obtained { border: 2px solid rgba(234,179,8,0.65); box-shadow: 4px 4px 0px rgba(234,179,8,0.40), 0 0 20px rgba(234,179,8,0.06); }
+.cert-card--progress { border-color: rgba(223,240,251,0.45); box-shadow: 4px 4px 0px rgba(223,240,251,0.22); }
+.cert-card--planned  { border-color: rgba(223,240,251,0.22); box-shadow: 3px 3px 0px rgba(223,240,251,0.12); animation: neon-breathe-yellow 4.5s ease-in-out infinite; }
+.cert-card:nth-child(2) { animation-delay: -1.8s; }
+.cert-card:nth-child(3) { animation-delay: -3.3s; }
+
+.cert-card__header { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-4); }
+.cert-card__logo { font-family: var(--font-display); font-size: var(--fs-lg); font-weight: 900; padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm); letter-spacing: 0.05em; border-width: 2px; }
+.cert-card__logo--pix     { background: var(--cl-pix-bg);  color: var(--cl-pix-color);  border: 1px solid var(--cl-pix-bd);  }
+.cert-card__logo--cisco   { background: var(--cl-csc-bg);  color: var(--cl-csc-color);  border: 1px solid var(--cl-csc-bd);  }
+.cert-card__logo--comptia { background: var(--cl-cmp-bg);  color: var(--cl-cmp-color);  border: 1px solid var(--cl-cmp-bd);  }
+.cert-card__logo--ccna    { background: var(--cl-ccna-bg); color: var(--cl-ccna-color); border: 1px solid var(--cl-ccna-bd); }
+
+/* Logos nuit : vraies couleurs de marque */
+.cert-card__logo--pix   { background: #1a1a2e !important; color: #3bdf6f !important; border-color: rgba(59,223,111,0.55) !important; box-shadow: 2px 2px 0px rgba(59,223,111,0.25), 0 0 12px rgba(59,223,111,0.12) !important; }
+.cert-card__logo--cisco { background: #1c1c1c !important; color: #1ba0d7 !important; border-color: rgba(27,160,215,0.55) !important; box-shadow: 2px 2px 0px rgba(27,160,215,0.25), 0 0 12px rgba(27,160,215,0.10) !important; }
+.cert-card__logo--comptia { background: rgba(234,179,8,0.10) !important; color: #eab308 !important; border-color: rgba(234,179,8,0.50) !important; box-shadow: 2px 2px 0px rgba(234,179,8,0.28) !important; }
+.cert-card__logo--ccna  { background: #1c1c1c !important; color: #1ba0d7 !important; border-color: rgba(27,160,215,0.45) !important; box-shadow: 2px 2px 0px rgba(27,160,215,0.20) !important; }
+
+.cert-card__title   { font-family: var(--font-display); font-size: var(--fs-base); font-weight: 700; color: var(--color-text-primary); letter-spacing: 0.03em; margin-bottom: var(--space-1); }
+.cert-card__issuer  { font-family: var(--font-mono); font-size: var(--fs-xs); color: var(--color-text-muted); margin-bottom: var(--space-3); letter-spacing: 0.05em; }
+.cert-card__description { font-size: var(--fs-sm); color: #e8f4fc; line-height: 1.6; margin-bottom: var(--space-4); }
+.cert-card__footer  { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); padding-top: var(--space-4); border-top: 1px solid rgba(234,179,8,0.15); }
+.cert-card__year    { font-family: var(--font-mono); font-size: var(--fs-xs); color: var(--color-text-muted); }
+.cert-card__link    { font-family: var(--font-mono); font-size: var(--fs-xs); color: #eab308; text-decoration: none; transition: color var(--transition-fast); }
+.cert-card__link:hover { color: #fcd34d; text-shadow: 0 0 8px rgba(234,179,8,0.50); }
+.cert-card__progress-bar  { flex: 1; height: 4px; background: rgba(255,255,255,0.06); border-radius: 2px; overflow: hidden; position: relative; }
+.cert-card__progress-fill { display: block; height: 100%; width: var(--cert-progress,0%); background: linear-gradient(90deg, #dff0fb, #eab308); border-radius: 2px; box-shadow: 0 0 6px rgba(234,179,8,0.40); animation: progress-reveal 1.2s ease forwards; }
+
+html.mode-jour .cert-card { background: #ffffff !important; border: 2.5px solid #111 !important; box-shadow: 5px 5px 0px #111 !important; animation: none; }
+html.mode-jour .cert-card:hover { transform: translate(-3px,-3px) !important; box-shadow: 8px 8px 0px #111 !important; border-color: #111 !important; }
+html.mode-jour .cert-card__logo--cisco   { color: #dc1414 !important; background: rgba(220,20,20,0.06) !important; border-color: rgba(220,20,20,0.2) !important; box-shadow: none !important; }
+html.mode-jour .cert-card__logo--comptia { color: #dc1414 !important; background: rgba(220,20,20,0.06) !important; border-color: rgba(220,20,20,0.2) !important; box-shadow: none !important; }
+html.mode-jour .cert-card__logo--ccna    { color: #7c3aed !important; background: rgba(124,58,237,0.06) !important; border-color: rgba(124,58,237,0.2) !important; box-shadow: none !important; }
+html.mode-jour .cert-card__logo--pix     { background: rgba(40,200,64,0.12) !important; color: #28c840 !important; border-color: rgba(40,200,64,0.3) !important; box-shadow: none !important; }
+html.mode-jour .cert-card__title   { color: #1e293b; }
+html.mode-jour .cert-card__issuer  { color: #64748b; }
+html.mode-jour .cert-card__year    { color: #64748b; }
+html.mode-jour .cert-card__description { color: #222 !important; }
+html.mode-jour .cert-card__link    { color: #dc1414; }
+html.mode-jour .cert-card__footer  { border-top-color: rgba(220,20,20,0.12); }
+html.mode-jour .cert-status--progress { color: #dc1414; }
+html.mode-jour .cert-status--planned  { color: #7c3aed; }
+
+/* ================================================================
+   19. EASTER EGG KONAMI
+   ================================================================ */
+.konami-toast {
+  position: fixed; bottom: var(--space-8); left: 50%; transform: translateX(-50%);
+  z-index: 9999; background: rgba(4,8,14,0.96);
+  border: 1px solid #eab308; border-radius: var(--radius-md); padding: var(--space-4) var(--space-8);
+  font-family: var(--font-display); font-size: var(--fs-base); font-weight: 700;
+  color: #eab308; text-shadow: 0 0 10px rgba(234,179,8,0.65);
+  box-shadow: 0 0 30px rgba(234,179,8,0.20), 4px 4px 0px rgba(234,179,8,0.35);
+  white-space: nowrap; animation: konami-appear 3s ease forwards;
+}
+.konami-toast span { color: #dff0fb; font-family: var(--font-japanese); }
+@keyframes konami-appear {
+  0%   { opacity: 0; transform: translateX(-50%) translateY(20px); }
+  15%  { opacity: 1; transform: translateX(-50%) translateY(0); }
+  75%  { opacity: 1; transform: translateX(-50%) translateY(0); }
+  100% { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+}
+.konami-active { animation: konami-glitch 0.3s ease infinite; }
+@keyframes konami-glitch {
+  0%   { filter: none; }
+  25%  { filter: hue-rotate(90deg) saturate(2); }
+  50%  { filter: hue-rotate(180deg) saturate(1.5) brightness(1.2); }
+  75%  { filter: hue-rotate(270deg) saturate(2); }
+  100% { filter: none; }
+}
+
+/* ================================================================
+   20. CURSEUR & RIPPLE
+   ================================================================ */
+#manga-pen { display: none; }
+
+@keyframes ripple-neon {
+  0%   { transform: translate(-50%,-50%) scale(0); opacity: 0.7; }
+  100% { transform: translate(-50%,-50%) scale(1); opacity: 0; }
+}
+.cursor-ripple { position: fixed; pointer-events: none; border-radius: 50%; z-index: 9996; animation: ripple-neon 0.6s ease-out forwards; }
+.cursor-ripple--1 { width: 40px; height: 40px; border: 1.5px solid rgba(223,240,251,0.9); box-shadow: 0 0 8px rgba(223,240,251,0.5), inset 0 0 8px rgba(223,240,251,0.2); }
+.cursor-ripple--2 { width: 70px; height: 70px; border: 1px solid rgba(223,240,251,0.5); box-shadow: 0 0 12px rgba(223,240,251,0.3); animation-delay: 0.08s; animation-duration: 0.75s; }
+.cursor-ripple--3 { width: 100px; height: 100px; border: 0.5px solid rgba(223,240,251,0.25); animation-delay: 0.18s; animation-duration: 0.9s; }
+.cursor-ripple { display: none; }
+
+/* ================================================================
+   21. ICÔNES SIMPLE ICONS — COULEURS DE MARQUE
+   ================================================================ */
+.skill-card__icon i { font-size: 18px; line-height: 1; display: block; }
+.project-tag i, .project-tech-list li i { font-size: 13px; vertical-align: -2px; margin-right: 4px; }
+
+.si-linux      { color: #FCC624 !important; }
+.si-debian     { color: #A81D33 !important; }
+.si-apache     { color: #D22128 !important; }
+.si-mariadb    { color: #003545 !important; filter: invert(1) brightness(1.5) !important; }
+.si-php        { color: #777BB4 !important; }
+.si-pfsense    { color: #444    !important; filter: invert(1) brightness(1.5) !important; }
+.si-windows    { color: #0078D4 !important; }
+.si-git        { color: #F05032 !important; }
+.si-kubernetes { color: #326CE5 !important; }
+.si-helm       { color: #0F1689 !important; filter: invert(1) brightness(1.8) !important; }
+.si-grafana    { color: #F46800 !important; }
+.si-docker     { color: #2496ED !important; }
+.si-argo       { color: #EF7B4D !important; }
+.si-gitea      { color: #609926 !important; }
+
+html.mode-jour .si-mariadb { color: #005f73 !important; filter: none !important; }
+html.mode-jour .si-pfsense { color: #555    !important; filter: none !important; }
+html.mode-jour .si-helm    { color: #0F1689 !important; filter: none !important; }
+html.mode-jour .project-tech-list li i,
+html.mode-jour .project-tag i { font-size: 15px !important; opacity: 1 !important; filter: none !important; }
+
+/* ================================================================
+   22. ANIMATIONS KEYFRAMES CURSEUR MANGA
+   ================================================================ */
+@keyframes mangaInkFade {
+  0%   { opacity: 0.8; transform: translate(-50%,-50%) scale(1); }
+  100% { opacity: 0;   transform: translate(-50%,-50%) scale(1.8); }
+}
+@keyframes mangaSplash {
+  0%   { opacity: 0.9; transform: translate(-50%,-50%) scale(1); }
+  100% { opacity: 0;   transform: translate(-50%,-50%) scale(2.2); }
+}
+
+/* ================================================================
+   23. SCROLLBAR
+   ================================================================ */
+::-webkit-scrollbar       { width: 8px; }
+::-webkit-scrollbar-track { background: var(--color-bg-secondary); }
+::-webkit-scrollbar-thumb { background: rgba(234,179,8,0.40); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(234,179,8,0.70); }
+html.mode-jour ::-webkit-scrollbar-thumb  { background: #dc1414 !important; }
+html.mode-jour ::-webkit-scrollbar-track  { background: #f5f5f0 !important; }
+

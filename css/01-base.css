@@ -1,0 +1,233 @@
+/* ================================================================
+   style.css — Portfolio Tom Marcorelli
+   Thème : Manga japonais — Nuit (noir/blanc-bleu/or) + Jour (shonen)
+   Architecture : variables nuit dans :root → surcharge .mode-jour
+   ================================================================ */
+
+/* ================================================================
+   1. VARIABLES CSS — MODE NUIT (défaut)
+   Les variables reflètent la palette finale nuit consolidée.
+   mode-jour surcharge uniquement ce qui change.
+   ================================================================ */
+:root {
+  /* ---- Palette nuit (blanc-bleu glacé + or) ---- */
+  --color-bg-primary:       #06080a;
+  --color-bg-secondary:     #090c0f;
+  --color-bg-card:          #0f1a22;
+  --color-bg-card-hover:    #152030;
+
+  --color-neon-cyan:        #dff0fb;
+  --color-neon-magenta:     #eab308;
+  --color-neon-yellow:      #dff0fb;
+  --color-neon-purple:      #2e5266;
+
+  /* ---- Textes ---- */
+  --color-text-primary:     #ddeef8;
+  --color-text-secondary:   #a8c4d8;
+  --color-text-muted:       #5a7a8a;
+
+  --color-border:           rgba(223, 240, 251, 0.20);
+  --color-border-strong:    rgba(223, 240, 251, 0.65);
+
+  /* ---- Typographie ---- */
+  --font-display:  'Orbitron', sans-serif;
+  --font-japanese: 'Noto Sans JP', sans-serif;
+  --font-mono:     'Share Tech Mono', monospace;
+
+  --fs-xs:   0.75rem;
+  --fs-sm:   0.875rem;
+  --fs-base: 1rem;
+  --fs-lg:   1.125rem;
+  --fs-xl:   1.25rem;
+  --fs-2xl:  1.5rem;
+  --fs-3xl:  1.875rem;
+  --fs-4xl:  2.25rem;
+  --fs-5xl:  3rem;
+
+  /* ---- Espacements ---- */
+  --space-1:  0.25rem;
+  --space-2:  0.5rem;
+  --space-3:  0.75rem;
+  --space-4:  1rem;
+  --space-5:  1.25rem;
+  --space-6:  1.5rem;
+  --space-8:  2rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --space-20: 5rem;
+  --space-24: 6rem;
+
+  /* ---- Bordures & Rayons ---- */
+  --radius-sm:   4px;
+  --radius-md:   8px;
+  --radius-lg:   12px;
+
+  /* ---- Glows nuit ---- */
+  --glow-cyan:
+    0 0 8px rgba(223, 240, 251, 0.8),
+    0 0 24px rgba(223, 240, 251, 0.30),
+    0 0 60px rgba(223, 240, 251, 0.10);
+  --glow-magenta:
+    0 0 8px rgba(234, 179, 8, 0.8),
+    0 0 24px rgba(234, 179, 8, 0.30),
+    0 0 60px rgba(234, 179, 8, 0.10);
+  --glow-text:    0 0 14px rgba(223, 240, 251, 0.85), 0 0 40px rgba(223, 240, 251, 0.25);
+
+  /* ---- Pixel shadow nuit ---- */
+  --shadow-pixel:       4px 4px 0px rgba(223, 240, 251, 0.50);
+  --shadow-pixel-hover: 6px 6px 0px rgba(234, 179, 8, 0.70);
+
+  /* ---- Terminal ---- */
+  --terminal-success-color: #eab308;
+
+  /* ---- Certifications : logos ---- */
+  --cl-pix-bg:    rgba(234,179,8,0.13);   --cl-pix-color:  #eab308;  --cl-pix-bd:   rgba(234,179,8,0.42);
+  --cl-csc-bg:    rgba(223,240,251,0.09); --cl-csc-color:  #dff0fb;  --cl-csc-bd:   rgba(223,240,251,0.30);
+  --cl-cmp-bg:    rgba(234,179,8,0.09);   --cl-cmp-color:  #eab308;  --cl-cmp-bd:   rgba(234,179,8,0.30);
+  --cl-ccna-bg:   rgba(223,240,251,0.08); --cl-ccna-color: #e8f4fc;  --cl-ccna-bd:  rgba(223,240,251,0.26);
+
+  /* ---- Certifications : badges statut ---- */
+  --cs-obt-bg:     rgba(234,179,8,0.14);   --cs-obt-color:  #eab308;  --cs-obt-border: rgba(234,179,8,0.55);
+  --cs-prg-bg:     rgba(223,240,251,0.09); --cs-prg-color:  #dff0fb;  --cs-prg-border: rgba(223,240,251,0.48);
+  --cs-pln-bg:     rgba(223,240,251,0.06); --cs-pln-color:  #a8c8e0;  --cs-pln-border: rgba(223,240,251,0.25);
+
+  /* ---- Transitions ---- */
+  --transition-fast:   150ms ease;
+  --transition-base:   250ms ease;
+  --transition-slow:   400ms ease;
+
+  /* ---- Layout ---- */
+  --container-max: 1200px;
+  --nav-height: 70px;
+}
+
+/* ================================================================
+   2. VARIABLES MODE JOUR — Surcharge complète
+   ================================================================ */
+html.mode-jour {
+  /* Palette */
+  --color-bg-primary:       #f8fafc;
+  --color-bg-secondary:     #f1f5f9;
+  --color-bg-card:          #ffffff;
+  --color-bg-card-hover:    #f0f4ff;
+
+  --color-neon-cyan:        #dc1414;
+  --color-neon-magenta:     #8b9e6e;
+  --color-neon-yellow:      #d97706;
+  --color-neon-purple:      #7c3aed;
+
+  --color-text-primary:     #111;
+  --color-text-secondary:   #222;
+  --color-text-muted:       #555;
+
+  --color-border:           rgba(37, 99, 235, 0.15);
+  --color-border-strong:    rgba(37, 99, 235, 0.35);
+
+  --glow-cyan:    0 2px 12px rgba(37,99,235,0.12);
+  --glow-magenta: 0 2px 12px rgba(220,20,20,0.12);
+  --glow-text:    none;
+
+  --shadow-pixel:       5px 5px 0px #111;
+  --shadow-pixel-hover: 8px 8px 0px #111;
+
+  --terminal-success-color: #16a34a;
+
+  /* Certifications : logos */
+  --cl-pix-bg:    rgba(40,200,64,0.12);   --cl-pix-color:  #28c840;  --cl-pix-bd:   rgba(40,200,64,0.3);
+  --cl-csc-bg:    rgba(220,20,20,0.08);   --cl-csc-color:  #dc1414;  --cl-csc-bd:   rgba(220,20,20,0.2);
+  --cl-cmp-bg:    rgba(220,20,20,0.08);   --cl-cmp-color:  #dc1414;  --cl-cmp-bd:   rgba(220,20,20,0.2);
+  --cl-ccna-bg:   rgba(124,58,237,0.08);  --cl-ccna-color: #7c3aed;  --cl-ccna-bd:  rgba(124,58,237,0.2);
+
+  /* Certifications : badges statut */
+  --cs-obt-bg:    rgba(220,20,20,0.08);    --cs-obt-color:  #dc1414;  --cs-obt-border: rgba(220,20,20,0.2);
+  --cs-prg-bg:    rgba(124,58,237,0.06);   --cs-prg-color:  #7c3aed;  --cs-prg-border: rgba(124,58,237,0.2);
+  --cs-pln-bg:    rgba(155,93,229,0.06);   --cs-pln-color:  #7c3aed;  --cs-pln-border: rgba(124,58,237,0.15);
+
+  background-color: #f8fafc;
+  color: #1e293b;
+  cursor: none;
+}
+
+html.mode-jour * { cursor: none !important; }
+
+/* ================================================================
+   3. RESET & BASE
+   ================================================================ */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: var(--nav-height);
+  background-color: var(--color-bg-primary);
+}
+
+body {
+  font-family: var(--font-japanese);
+  font-size: var(--fs-base);
+  line-height: 1.8;
+  color: var(--color-text-primary);
+  background-color: transparent;
+  overflow-x: hidden;
+  cursor: none;
+}
+
+@media (hover: none) { body { cursor: auto; } }
+
+img, video { max-width: 100%; display: block; }
+
+@media (hover: hover) {
+  a, button, label, select, input, textarea, [role="button"], [tabindex] {
+    cursor: none !important;
+  }
+}
+
+a {
+  color: var(--color-neon-cyan);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+a:hover { color: #fff; }
+
+html.mode-jour a       { color: #dc1414; }
+html.mode-jour a:hover { color: #111; }
+html.mode-jour body    { color: #1e293b; }
+
+ul { list-style: none; }
+
+:focus-visible {
+  outline: 2px solid var(--color-neon-cyan);
+  outline-offset: 4px;
+  border-radius: var(--radius-sm);
+}
+
+/* ================================================================
+   4. ÉLÉMENTS DE FOND DÉCORATIFS
+   ================================================================ */
+.bg-grid {
+  position: fixed;
+  inset: 0;
+  z-index: -3;
+  background-image:
+    linear-gradient(rgba(223, 240, 251, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(223, 240, 251, 0.035) 1px, transparent 1px);
+  background-size: 50px 50px;
+  animation: grid-scroll 20s linear infinite;
+}
+
+html.mode-jour .bg-grid {
+  background-image:
+    linear-gradient(rgba(37, 99, 235, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(37, 99, 235, 0.04) 1px, transparent 1px);
+}
+
+@keyframes grid-scroll {
+  from { background-position: 0 0; }
+  to   { background-position: 0 50px; }
+}
+
